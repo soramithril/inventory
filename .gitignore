@@ -5,3 +5,6 @@ Thumbs.db
 
 # Dependencies (none needed, but just in case)
 node_modules/
+
+# Local tooling / preview config
+.claude/
