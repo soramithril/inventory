@@ -82,9 +82,8 @@ function renderInventoryPage(){
             </div>
             <span class="${statusClass}">${item.status.replace(/_/g," ").toUpperCase()}</span>
           </div>
-          ${priceStr||item.purchase_link?`<div class="inv-card-price-row">
-            ${priceStr?`<span class="inv-card-price">${priceStr}</span>`:""}
-            ${item.purchase_link?`<a href="${esc(item.purchase_link)}" target="_blank" rel="noopener" class="inv-card-buy-link">Buy Here →</a>`:""}
+          ${priceStr?`<div class="inv-card-price-row">
+            <span class="inv-card-price">${priceStr}</span>
           </div>`:""}
           ${item.notes?`<div class="inv-card-notes">${esc(item.notes)}</div>`:""}
           <div class="inv-card-actions">
@@ -179,10 +178,6 @@ function openAddInventoryItem(){
       <input type="number" class="si-form-input" id="inv-price" placeholder="0.00" step="0.01" min="0">
     </div>
     <div class="si-form-group">
-      <label class="si-form-label">Purchase Link <span style="font-weight:400;color:var(--fg-muted)">(where to buy)</span></label>
-      <input type="text" class="si-form-input" id="inv-link" placeholder="https://…">
-    </div>
-    <div class="si-form-group">
       <label class="si-form-label">Image URL (optional)</label>
       <input type="text" class="si-form-input" id="inv-img" placeholder="https://…">
     </div>
@@ -206,13 +201,12 @@ async function saveInventoryItem(){
   const min=parseInt(document.getElementById("inv-min")?.value||5);
   const unit=(document.getElementById("inv-unit")?.value||"unit").trim();
   const price=parseFloat(document.getElementById("inv-price")?.value)||null;
-  const link=(document.getElementById("inv-link")?.value||"").trim();
   const img=(document.getElementById("inv-img")?.value||"").trim();
   const notes=(document.getElementById("inv-notes")?.value||"").trim();
   if(!name||!catId){toast("Please fill in required fields","error");return;}
   try{
     const status=stock===0?"out_of_stock":stock<=min?"low":"in_stock";
-    await sbF("POST","inventory_items",{item_name:name,product_number:prodNum,category_id:catId,current_stock:stock,min_threshold:min,unit,image_url:img||null,status,notes,price,purchase_link:link});
+    await sbF("POST","inventory_items",{item_name:name,product_number:prodNum,category_id:catId,current_stock:stock,min_threshold:min,unit,image_url:img||null,status,notes,price});
     toast("Item added");
     closeModal();
     await loadInventoryData();
@@ -257,10 +251,6 @@ function editInventoryItem(itemId){
       <input type="number" class="si-form-input" id="inv-price" value="${item.price||""}" step="0.01" min="0">
     </div>
     <div class="si-form-group">
-      <label class="si-form-label">Purchase Link <span style="font-weight:400;color:var(--fg-muted)">(where to buy)</span></label>
-      <input type="text" class="si-form-input" id="inv-link" value="${esc(item.purchase_link||"")}">
-    </div>
-    <div class="si-form-group">
       <label class="si-form-label">Image URL</label>
       <input type="text" class="si-form-input" id="inv-img" value="${item.image_url?esc(item.image_url):""}">
     </div>
@@ -284,13 +274,12 @@ async function updateInventoryItem(itemId){
   const min=parseInt(document.getElementById("inv-min")?.value||5);
   const unit=(document.getElementById("inv-unit")?.value||"unit").trim();
   const price=parseFloat(document.getElementById("inv-price")?.value)||null;
-  const link=(document.getElementById("inv-link")?.value||"").trim();
   const img=(document.getElementById("inv-img")?.value||"").trim();
   const notes=(document.getElementById("inv-notes")?.value||"").trim();
   if(!name||!catId){toast("Please fill in required fields","error");return;}
   try{
     const status=stock===0?"out_of_stock":stock<=min?"low":"in_stock";
-    await sbF("PATCH",`inventory_items?id=eq.${itemId}`,{item_name:name,product_number:prodNum,category_id:catId,current_stock:stock,min_threshold:min,unit,image_url:img||null,notes,status,price,purchase_link:link});
+    await sbF("PATCH",`inventory_items?id=eq.${itemId}`,{item_name:name,product_number:prodNum,category_id:catId,current_stock:stock,min_threshold:min,unit,image_url:img||null,notes,status,price});
     toast("Item updated");
     closeModal();
     await loadInventoryData();
