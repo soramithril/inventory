@@ -11,6 +11,13 @@ function initRealtime(){
   if(!USE_SUPABASE||!window.supabase)return;
   try{
     _sbClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+    // Inventory tables are RLS-restricted to authenticated users, so the
+    // realtime connection must carry the signed-in user's token to receive
+    // change events. (Kept fresh on token refresh — see refreshSession.)
+    try{
+      const sess=JSON.parse(localStorage.getItem("ss_session")||"{}");
+      if(sess.access_token)_sbClient.realtime.setAuth(sess.access_token);
+    }catch(e){}
   }catch(e){console.warn("Realtime init failed:",e);return;}
 
   _realtimeChannel=_sbClient.channel("inventory-sync")

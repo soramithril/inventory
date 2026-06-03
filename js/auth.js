@@ -18,6 +18,9 @@ async function refreshSession(){
       localStorage.setItem("ss_session",JSON.stringify(ref));
       _currentUser=ref.user;
       updateUserBadge(ref.user);
+      // Keep the realtime connection's auth token current so live-sync
+      // (RLS-restricted to authenticated users) keeps receiving events.
+      try{if(typeof _sbClient!=="undefined"&&_sbClient)_sbClient.realtime.setAuth(ref.access_token);}catch(e){}
       console.log("[session] Token refreshed successfully");
       return true;
     }
