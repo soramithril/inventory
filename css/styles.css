@@ -1687,3 +1687,66 @@ input,select,textarea,.sf-select,.wh-field select,.login-input,.addinput,.tname,
 .cl-co-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:.3px;text-transform:uppercase}
 .cl-co-badge.jj{background:#fef3c7;color:#92400e}
 .cl-co-badge.jwg{background:#dbeafe;color:#1e40af}
+
+/* ════════════════════════════════════════════════════════════════════════
+   RPG LOOT VAULT THEME — applied to the Back Shop Inventory page (.inv-rpg)
+   Same JWG palette; items styled as glowing "loot" cards. Page stays light;
+   the cards themselves are dark loot slots (matches the approved mockup).
+   ════════════════════════════════════════════════════════════════════════ */
+.inv-rpg .si-title{font-family:"Press Start 2P",monospace;font-size:14px;line-height:1.5;color:var(--accent-dim);}
+.inv-rpg .inv-grid{gap:22px;}
+
+.inv-rpg .inv-card-v2{
+  position:relative;background:#0f1a12;border:2px solid #1f3a28;border-radius:10px;color:#eaf6ec;
+  box-shadow:0 0 0 1px rgba(0,0,0,.4) inset,0 10px 30px rgba(0,0,0,.25);
+  transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s,border-color .35s;
+}
+.inv-rpg .inv-card-v2:hover{transform:translateY(-6px) scale(1.02);}
+.inv-rpg .inv-card-img{position:relative;overflow:hidden;border-bottom:1px solid #1f3a28;
+  background:radial-gradient(circle at 50% 40%,rgba(5,115,52,.40),transparent 70%);}
+.inv-rpg .inv-card-img-ph{opacity:.9;filter:drop-shadow(0 4px 10px var(--accent-glow));}
+.inv-rpg .inv-card-name{color:#eaf6ec;}
+.inv-rpg .inv-card-prodnum{background:#15261a;color:#9be0a4;}
+.inv-rpg .inv-card-stock-num{color:#fff;}
+.inv-rpg .inv-card-stock-unit{color:#8fb89c;}
+.inv-rpg .inv-card-min{color:#8fb89c;}
+.inv-rpg .inv-card-notes{color:#8fb89c;}
+.inv-rpg .inv-card-price-row,.inv-rpg .inv-card-actions{border-top-color:#1f3a28;}
+.inv-rpg .inv-card-price{color:#ffd76a;text-shadow:0 0 8px rgba(255,200,60,.4);}
+
+/* buttons on dark loot cards */
+.inv-rpg .stock-btn{background:#15261a;color:#cdeccf;border:1px solid #2c4a36;}
+.inv-rpg .stock-btn:hover{background:#1d3526;}
+.inv-rpg .loc-action-btn{background:#15261a;color:#9be0a4;border-color:#2c4a36;}
+.inv-rpg .loc-action-btn:hover{background:#1d3526;color:#cdeccf;border-color:var(--accent-dim);}
+.inv-rpg .loc-action-btn.delete{color:#f9a8a8;border-color:#5a2230;}
+.inv-rpg .loc-action-btn.delete:hover{background:#3a1620;border-color:#7f1d1d;}
+
+/* status badges readable on dark */
+.inv-rpg .status-badge{font-family:"Press Start 2P",monospace;font-size:7px;line-height:1.7;padding:5px 7px;background:rgba(205,236,207,.12);color:#9be0a4;}
+.inv-rpg .status-badge.low{background:rgba(217,119,6,.20);color:#fbbf24;}
+.inv-rpg .status-badge.out_of_stock{background:rgba(220,38,38,.20);color:#fca5a5;}
+.inv-rpg .status-badge.ordered{background:rgba(59,130,246,.20);color:#93c5fd;}
+
+/* rarity glow keyed to stock status */
+.inv-rpg .inv-card-v2[data-status="in_stock"]{border-color:#2f7d45;animation:rpg-float 5s ease-in-out infinite;}
+.inv-rpg .inv-card-v2[data-status="ordered"]{border-color:#3b82f6;box-shadow:0 0 22px rgba(59,130,246,.40),0 0 0 1px rgba(0,0,0,.4) inset;}
+.inv-rpg .inv-card-v2[data-status="low"]{border-color:#d97706;box-shadow:0 0 22px rgba(217,119,6,.35),0 0 0 1px rgba(0,0,0,.4) inset;}
+.inv-rpg .inv-card-v2[data-status="out_of_stock"]{border-color:#7f1d1d;box-shadow:0 0 16px rgba(220,38,38,.30),0 0 0 1px rgba(0,0,0,.4) inset;opacity:.9;}
+@keyframes rpg-float{0%,100%{box-shadow:0 0 18px var(--accent-glow),0 0 0 1px rgba(0,0,0,.4) inset;}50%{box-shadow:0 0 34px var(--accent-glow),0 0 0 1px rgba(0,0,0,.4) inset;}}
+
+/* animated corner brackets */
+.inv-rpg .inv-card-v2::before,.inv-rpg .inv-card-v2::after{content:"";position:absolute;width:16px;height:16px;border:2px solid var(--accent);opacity:.75;z-index:4;pointer-events:none;}
+.inv-rpg .inv-card-v2::before{top:7px;left:7px;border-right:0;border-bottom:0;}
+.inv-rpg .inv-card-v2::after{bottom:7px;right:7px;border-left:0;border-top:0;}
+
+/* slow shimmer sweep across the item icon */
+.inv-rpg .inv-card-img::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,transparent 30%,rgba(205,236,207,.18) 50%,transparent 70%);
+  background-size:250% 250%;animation:rpg-sheen 4.5s linear infinite;}
+@keyframes rpg-sheen{0%{background-position:140% 0;}100%{background-position:-40% 0;}}
+
+@media (prefers-reduced-motion:reduce){
+  .inv-rpg .inv-card-v2[data-status="in_stock"]{animation:none;}
+  .inv-rpg .inv-card-img::after{animation:none;}
+}

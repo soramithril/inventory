@@ -20,10 +20,16 @@ async function initInventoryPage(){
   renderInventoryPage();
 }
 
+// Builds the page shell (header + filter bar) ONCE, then fills the item list.
+// The filter bar is rendered separately from the grid so that typing in the
+// search box never rebuilds (and thus never blurs) the input, and the
+// category/status dropdowns keep their current selection.
 function renderInventoryPage(){
   const root=document.querySelector(".card");
   if(!root)return;
-  let h=`<div class="si-header">
+  root.classList.add("inv-rpg");
+  const sel=(a,b)=>a===b?" selected":"";
+  root.innerHTML=`<div class="si-header">
     <div><div class="si-title">Back Shop Inventory</div></div>
     <div class="si-actions">
       <button class="si-action-btn" onclick="openAddInventoryItem()">+ Add Item</button>
@@ -32,23 +38,30 @@ function renderInventoryPage(){
     </div>
   </div>
   <div class="si-filter-bar">
-    <input type="text" class="si-filter-input" placeholder="Search item…" id="inv-search" oninput="INV.search=this.value;filterInventory()">
-    <select class="si-filter-select" onchange="INV.filter=this.value;filterInventory()">
-      <option value="all">All Categories</option>
-      ${INV.categories.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}
+    <input type="text" class="si-filter-input" placeholder="Search item…" id="inv-search" value="${esc(INV.search)}" oninput="INV.search=this.value;renderInventoryList()">
+    <select class="si-filter-select" onchange="INV.filter=this.value;renderInventoryList()">
+      <option value="all"${sel(INV.filter,"all")}>All Categories</option>
+      ${INV.categories.map(c=>`<option value="${c.id}"${sel(INV.filter,c.id)}>${esc(c.name)}</option>`).join("")}
     </select>
-    <select class="si-filter-select" onchange="INV.statusFilter=this.value;filterInventory()">
-      <option value="all">All Status</option>
-      <option value="in_stock">In Stock</option>
-      <option value="low">Low Stock</option>
-      <option value="out_of_stock">Out of Stock</option>
-      <option value="ordered">Ordered</option>
-      <option value="needs_reorder">Needs Reorder</option>
+    <select class="si-filter-select" onchange="INV.statusFilter=this.value;renderInventoryList()">
+      <option value="all"${sel(INV.statusFilter,"all")}>All Status</option>
+      <option value="in_stock"${sel(INV.statusFilter,"in_stock")}>In Stock</option>
+      <option value="low"${sel(INV.statusFilter,"low")}>Low Stock</option>
+      <option value="out_of_stock"${sel(INV.statusFilter,"out_of_stock")}>Out of Stock</option>
+      <option value="ordered"${sel(INV.statusFilter,"ordered")}>Ordered</option>
+      <option value="needs_reorder"${sel(INV.statusFilter,"needs_reorder")}>Needs Reorder</option>
     </select>
   </div>
-  <div style="padding:0 0 14px 0;overflow-x:auto;">`;
+  <div style="padding:0 0 14px 0;overflow-x:auto;" id="inv-list"></div>`;
+  renderInventoryList();
+}
 
-  let filtered=INV.items.filter(item=>{
+// Renders ONLY the filtered item grid into #inv-list.
+function renderInventoryList(){
+  const wrap=document.getElementById("inv-list");
+  if(!wrap)return;
+
+  const filtered=INV.items.filter(item=>{
     if(INV.search&&!item.item_name.toLowerCase().includes(INV.search.toLowerCase()))return false;
     if(INV.filter!=="all"&&item.category_id!==INV.filter)return false;
     if(INV.statusFilter!=="all"){
@@ -59,55 +72,54 @@ function renderInventoryPage(){
   });
 
   if(!filtered.length){
-    h+=`<div style="padding:24px;"><div class="si-empty"><div class="si-empty-icon">📦</div><div class="si-empty-text">No items found</div><div class="si-empty-sub">Track tools, parts, and supplies</div></div></div>`;
-  }else{
-    h+=`<div class="inv-grid">`;
-    filtered.forEach(item=>{
-      const cat=INV.categories.find(c=>c.id===item.category_id);
-      const statusClass=`status-badge ${item.status}`;
-      const priceStr=item.price?`$${Number(item.price).toFixed(2)}`:"";
-      h+=`<div class="inv-card-v2">
-        <div class="inv-card-img">${item.image_url?`<img src="${esc(item.image_url)}" alt="${esc(item.item_name)}">`:`<span class="inv-card-img-ph">📦</span>`}</div>
-        <div class="inv-card-body">
-          <div class="inv-card-top">
-            <div class="inv-card-name">${esc(item.item_name)}</div>
-            ${item.product_number?`<div class="inv-card-prodnum">#${esc(item.product_number)}</div>`:""}
-            <span class="service-badge svc-color-${INV.categories.findIndex(c=>c.id===item.category_id)%8}">${cat?esc(cat.name):"?"}</span>
-          </div>
-          <div class="inv-card-meta">
-            <div class="inv-card-stock">
-              <span class="inv-card-stock-num">${item.current_stock}</span>
-              <span class="inv-card-stock-unit">${esc(item.unit)}</span>
-              <span style="color:var(--fg-muted);font-size:11px;">min ${item.min_threshold}</span>
-            </div>
-            <span class="${statusClass}">${item.status.replace(/_/g," ").toUpperCase()}</span>
-          </div>
-          ${priceStr?`<div class="inv-card-price-row">
-            <span class="inv-card-price">${priceStr}</span>
-          </div>`:""}
-          ${item.notes?`<div class="inv-card-notes">${esc(item.notes)}</div>`:""}
-          <div class="inv-card-actions">
-            <div class="inv-card-adjust">
-              <button class="stock-btn" onclick="adjustInventory('${item.id}',-1)">−</button>
-              <button class="stock-btn" onclick="adjustInventory('${item.id}',1)">+</button>
-              ${item.status==="ordered"?`<button class="stock-btn" onclick="restockItem('${item.id}')">Restocked</button>`:`<button class="stock-btn" onclick="markOrdered('${item.id}')">Mark Ordered</button>`}
-            </div>
-            <div class="inv-card-edit">
-              <button class="loc-action-btn" onclick="editInventoryItem('${item.id}')">Edit</button>
-              <button class="loc-action-btn delete" onclick="if(confirm('Delete this item?'))deleteInventoryItem('${item.id}')">Delete</button>
-            </div>
-          </div>
-        </div>
-      </div>`;
-    });
-    h+=`</div>`;
+    wrap.innerHTML=`<div style="padding:24px;"><div class="si-empty"><div class="si-empty-icon">📦</div><div class="si-empty-text">No items found</div><div class="si-empty-sub">Track tools, parts, and supplies</div></div></div>`;
+    return;
   }
 
-  h+=`</div></div>`;
-  root.innerHTML=h;
+  let h=`<div class="inv-grid">`;
+  filtered.forEach(item=>{
+    const cat=INV.categories.find(c=>c.id===item.category_id);
+    const statusClass=`status-badge ${item.status}`;
+    const priceStr=item.price?`$${Number(item.price).toFixed(2)}`:"";
+    h+=`<div class="inv-card-v2" data-status="${item.status}">
+      <div class="inv-card-img">${item.image_url?`<img src="${esc(item.image_url)}" alt="${esc(item.item_name)}">`:`<span class="inv-card-img-ph">📦</span>`}</div>
+      <div class="inv-card-body">
+        <div class="inv-card-top">
+          <div class="inv-card-name">${esc(item.item_name)}</div>
+          ${item.product_number?`<div class="inv-card-prodnum">#${esc(item.product_number)}</div>`:""}
+          <span class="service-badge svc-color-${INV.categories.findIndex(c=>c.id===item.category_id)%8}">${cat?esc(cat.name):"?"}</span>
+        </div>
+        <div class="inv-card-meta">
+          <div class="inv-card-stock">
+            <span class="inv-card-stock-num">${item.current_stock}</span>
+            <span class="inv-card-stock-unit">${esc(item.unit)}</span>
+            <span class="inv-card-min">min ${item.min_threshold}</span>
+          </div>
+          <span class="${statusClass}">${item.status.replace(/_/g," ").toUpperCase()}</span>
+        </div>
+        ${priceStr?`<div class="inv-card-price-row">
+          <span class="inv-card-price">${priceStr}</span>
+        </div>`:""}
+        ${item.notes?`<div class="inv-card-notes">${esc(item.notes)}</div>`:""}
+        <div class="inv-card-actions">
+          <div class="inv-card-adjust">
+            <button class="stock-btn" onclick="adjustInventory('${item.id}',-1)">−</button>
+            <button class="stock-btn" onclick="adjustInventory('${item.id}',1)">+</button>
+            ${item.status==="ordered"?`<button class="stock-btn" onclick="restockItem('${item.id}')">Restocked</button>`:`<button class="stock-btn" onclick="markOrdered('${item.id}')">Mark Ordered</button>`}
+          </div>
+          <div class="inv-card-edit">
+            <button class="loc-action-btn" onclick="editInventoryItem('${item.id}')">Edit</button>
+            <button class="loc-action-btn delete" onclick="if(confirm('Delete this item?'))deleteInventoryItem('${item.id}')">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  });
+  h+=`</div>`;
+  wrap.innerHTML=h;
 }
 
-function filterInventory(){renderInventoryPage();}
+function filterInventory(){renderInventoryList();}
 
 async function adjustInventory(itemId,delta){
   const item=INV.items.find(i=>i.id===itemId);
@@ -121,7 +133,7 @@ async function adjustInventory(itemId,delta){
     await sbF("PATCH",`inventory_items?id=eq.${itemId}`,{current_stock:newCount,status:newStatus});
     item.current_stock=newCount;
     item.status=newStatus;
-    renderInventoryPage();
+    renderInventoryList();
   }catch(e){toast("Failed to update stock","error");console.error(e);}
 }
 
@@ -130,7 +142,7 @@ async function markOrdered(itemId){
     await sbF("PATCH",`inventory_items?id=eq.${itemId}`,{status:"ordered"});
     const item=INV.items.find(i=>i.id===itemId);
     if(item)item.status="ordered";
-    renderInventoryPage();
+    renderInventoryList();
   }catch(e){toast("Failed to mark as ordered","error");console.error(e);}
 }
 
@@ -139,7 +151,7 @@ async function restockItem(itemId){
     await sbF("PATCH",`inventory_items?id=eq.${itemId}`,{status:"in_stock"});
     const item=INV.items.find(i=>i.id===itemId);
     if(item)item.status="in_stock";
-    renderInventoryPage();
+    renderInventoryList();
   }catch(e){toast("Failed to mark as restocked","error");console.error(e);}
 }
 
