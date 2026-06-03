@@ -215,7 +215,6 @@ async function saveInventoryItem(){
   const price=parseFloat(document.getElementById("inv-price")?.value)||null;
   const img=(document.getElementById("inv-img")?.value||"").trim();
   const notes=(document.getElementById("inv-notes")?.value||"").trim();
-  if(!name||!catId){toast("Please fill in required fields","error");return;}
   try{
     const status=stock===0?"out_of_stock":stock<=min?"low":"in_stock";
     await sbF("POST","inventory_items",{item_name:name,product_number:prodNum,category_id:catId,current_stock:stock,min_threshold:min,unit,image_url:img||null,status,notes,price});
@@ -288,7 +287,6 @@ async function updateInventoryItem(itemId){
   const price=parseFloat(document.getElementById("inv-price")?.value)||null;
   const img=(document.getElementById("inv-img")?.value||"").trim();
   const notes=(document.getElementById("inv-notes")?.value||"").trim();
-  if(!name||!catId){toast("Please fill in required fields","error");return;}
   try{
     const status=stock===0?"out_of_stock":stock<=min?"low":"in_stock";
     await sbF("PATCH",`inventory_items?id=eq.${itemId}`,{item_name:name,product_number:prodNum,category_id:catId,current_stock:stock,min_threshold:min,unit,image_url:img||null,notes,status,price});
