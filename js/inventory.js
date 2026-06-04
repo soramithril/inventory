@@ -57,22 +57,15 @@ function animateAllCounts(){
   });
 }
 
-// Floating sparkles over an element — celebrates a restock / stock increase.
-function sparkleAt(el){
+// Stock-level percentage for the charge bar (full ≈ 2× the min threshold).
+function stockPct(stock,min){const cap=Math.max(1,(min||1)*2);return Math.max(4,Math.min(100,Math.round((stock/cap)*100)));}
+
+// Restock / stock-up effect: a power-up aura glow surges across the card.
+// (Removed after it finishes so the card's status animation resumes.)
+function triggerPowerUp(el){
   if(!el)return;
-  const r=el.getBoundingClientRect();
-  const icons=["✨","⭐","💫","🌟"];
-  for(let i=0;i<7;i++){
-    const s=document.createElement("div");
-    s.className="inv-spark";
-    s.textContent=icons[i%icons.length];
-    s.style.left=(r.left+Math.random()*r.width)+"px";
-    s.style.top=(r.top+r.height*0.25+Math.random()*r.height*0.4)+"px";
-    s.style.setProperty("--dx",(Math.random()*70-35)+"px");
-    s.style.animationDelay=(Math.random()*0.15)+"s";
-    document.body.appendChild(s);
-    setTimeout(()=>s.remove(),1100);
-  }
+  el.classList.remove("power-up");void el.offsetWidth;el.classList.add("power-up");
+  setTimeout(()=>el.classList.remove("power-up"),1050);
 }
 
 // Update one card's stock/status in place (so the count-up animation isn't wiped by a full re-render).
@@ -83,6 +76,8 @@ function updateCardInPlace(card,item){
   card.dataset.status=item.status;
   const badge=card.querySelector(".status-badge");
   if(badge){badge.className="status-badge "+item.status;badge.textContent=item.status.replace(/_/g," ").toUpperCase();}
+  const bar=card.querySelector(".inv-card-bar i");
+  if(bar)bar.style.width=stockPct(item.current_stock,item.min_threshold)+"%";
 }
 
 // Builds the page shell (header + filter bar) ONCE, then fills the item list.
@@ -162,6 +157,7 @@ function renderInventoryList(){
           </div>
           <span class="${statusClass}">${item.status.replace(/_/g," ").toUpperCase()}</span>
         </div>
+        <div class="inv-card-bar"><i style="width:${stockPct(item.current_stock,item.min_threshold)}%"></i></div>
         ${priceStr?`<div class="inv-card-price-row">
           <span class="inv-card-price">${priceStr}</span>
         </div>`:""}
@@ -202,11 +198,11 @@ async function adjustInventory(itemId,delta){
     if(card&&INV.statusFilter==="all"){
       // Animate the change in place so the count-up isn't wiped by a re-render.
       updateCardInPlace(card,item);
-      if(delta>0)sparkleAt(card);
+      if(delta>0)triggerPowerUp(card);
     }else{
       // A status filter is active — re-render so the item shows/hides correctly.
       renderInventoryList();
-      if(delta>0)sparkleAt(document.querySelector(`.inv-card-v2[data-id="${itemId}"]`));
+      if(delta>0)triggerPowerUp(document.querySelector(`.inv-card-v2[data-id="${itemId}"]`));
     }
   }catch(e){toast("Failed to update stock","error");console.error(e);}
 }
@@ -226,7 +222,7 @@ async function restockItem(itemId){
     const item=INV.items.find(i=>i.id===itemId);
     if(item)item.status="in_stock";
     renderInventoryList();
-    sparkleAt(document.querySelector(`.inv-card-v2[data-id="${itemId}"]`));
+    triggerPowerUp(document.querySelector(`.inv-card-v2[data-id="${itemId}"]`));
     toast("Restocked!","success");
   }catch(e){toast("Failed to mark as restocked","error");console.error(e);}
 }
