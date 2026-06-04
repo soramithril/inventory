@@ -16,8 +16,73 @@ async function loadInventoryData(){
 }
 
 async function initInventoryPage(){
+  renderInventorySkeleton();
   await loadInventoryData();
   renderInventoryPage();
+  animateAllCounts();
+}
+
+// Shimmer placeholder cards while inventory loads.
+function renderInventorySkeleton(){
+  const root=document.querySelector(".card");
+  if(!root)return;
+  root.classList.add("inv-rpg");
+  let cards="";
+  for(let i=0;i<6;i++){
+    cards+=`<div class="inv-skel"><div class="inv-skel-img"></div><div class="inv-skel-body"><div class="sk-line w70"></div><div class="sk-line w40"></div><div class="sk-line"></div></div></div>`;
+  }
+  root.innerHTML=`<div class="si-header"><div><div class="si-title">Back Shop Inventory</div></div></div><div class="inv-grid" style="padding:16px">${cards}</div>`;
+}
+
+// Tween a number element from -> to (used for the stock count-up effect).
+function animateCount(el,from,to,dur=520){
+  if(!el)return;
+  el.classList.remove("count-bump");void el.offsetWidth;el.classList.add("count-bump");
+  if(from===to){el.textContent=to;return;}
+  const start=performance.now();
+  function tick(now){
+    const t=Math.min(1,(now-start)/dur);
+    const ease=1-Math.pow(1-t,3);
+    el.textContent=Math.round(from+(to-from)*ease);
+    if(t<1)requestAnimationFrame(tick);else el.textContent=to;
+  }
+  requestAnimationFrame(tick);
+}
+
+// Count every visible stock number up from 0 (on first load).
+function animateAllCounts(){
+  document.querySelectorAll(".inv-card-stock-num").forEach(el=>{
+    const to=parseInt(el.textContent)||0;
+    animateCount(el,0,to,650);
+  });
+}
+
+// Floating sparkles over an element — celebrates a restock / stock increase.
+function sparkleAt(el){
+  if(!el)return;
+  const r=el.getBoundingClientRect();
+  const icons=["✨","⭐","💫","🌟"];
+  for(let i=0;i<7;i++){
+    const s=document.createElement("div");
+    s.className="inv-spark";
+    s.textContent=icons[i%icons.length];
+    s.style.left=(r.left+Math.random()*r.width)+"px";
+    s.style.top=(r.top+r.height*0.25+Math.random()*r.height*0.4)+"px";
+    s.style.setProperty("--dx",(Math.random()*70-35)+"px");
+    s.style.animationDelay=(Math.random()*0.15)+"s";
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),1100);
+  }
+}
+
+// Update one card's stock/status in place (so the count-up animation isn't wiped by a full re-render).
+function updateCardInPlace(card,item){
+  if(!card)return;
+  const numEl=card.querySelector(".inv-card-stock-num");
+  if(numEl)animateCount(numEl,parseInt(numEl.textContent)||0,item.current_stock);
+  card.dataset.status=item.status;
+  const badge=card.querySelector(".status-badge");
+  if(badge){badge.className="status-badge "+item.status;badge.textContent=item.status.replace(/_/g," ").toUpperCase();}
 }
 
 // Builds the page shell (header + filter bar) ONCE, then fills the item list.
@@ -81,7 +146,7 @@ function renderInventoryList(){
     const cat=INV.categories.find(c=>c.id===item.category_id);
     const statusClass=`status-badge ${item.status}`;
     const priceStr=item.price?`$${Number(item.price).toFixed(2)}`:"";
-    h+=`<div class="inv-card-v2" data-status="${item.status}">
+    h+=`<div class="inv-card-v2" data-status="${item.status}" data-id="${item.id}">
       <div class="inv-card-img">${item.image_url?`<img src="${esc(item.image_url)}" alt="${esc(item.item_name)}">`:`<span class="inv-card-img-ph">📦</span>`}</div>
       <div class="inv-card-body">
         <div class="inv-card-top">
@@ -133,7 +198,16 @@ async function adjustInventory(itemId,delta){
     await sbF("PATCH",`inventory_items?id=eq.${itemId}`,{current_stock:newCount,status:newStatus});
     item.current_stock=newCount;
     item.status=newStatus;
-    renderInventoryList();
+    const card=document.querySelector(`.inv-card-v2[data-id="${itemId}"]`);
+    if(card&&INV.statusFilter==="all"){
+      // Animate the change in place so the count-up isn't wiped by a re-render.
+      updateCardInPlace(card,item);
+      if(delta>0)sparkleAt(card);
+    }else{
+      // A status filter is active — re-render so the item shows/hides correctly.
+      renderInventoryList();
+      if(delta>0)sparkleAt(document.querySelector(`.inv-card-v2[data-id="${itemId}"]`));
+    }
   }catch(e){toast("Failed to update stock","error");console.error(e);}
 }
 
@@ -152,6 +226,8 @@ async function restockItem(itemId){
     const item=INV.items.find(i=>i.id===itemId);
     if(item)item.status="in_stock";
     renderInventoryList();
+    sparkleAt(document.querySelector(`.inv-card-v2[data-id="${itemId}"]`));
+    toast("Restocked!","success");
   }catch(e){toast("Failed to mark as restocked","error");console.error(e);}
 }
 
