@@ -1693,7 +1693,7 @@ input,select,textarea,.sf-select,.wh-field select,.login-input,.addinput,.tname,
    Same JWG palette; items styled as glowing "loot" cards. Page stays light;
    the cards themselves are dark loot slots (matches the approved mockup).
    ════════════════════════════════════════════════════════════════════════ */
-.inv-rpg .si-title{font-family:"Press Start 2P",monospace;font-size:14px;line-height:1.5;color:var(--accent-dim);}
+.inv-rpg .si-title{font-family:"Oswald",sans-serif;font-weight:700;font-size:23px;letter-spacing:.06em;text-transform:uppercase;line-height:1.1;color:var(--accent-dim);}
 .inv-rpg .inv-grid{gap:22px;}
 
 .inv-rpg .inv-card-v2{
@@ -1723,7 +1723,7 @@ input,select,textarea,.sf-select,.wh-field select,.login-input,.addinput,.tname,
 .inv-rpg .loc-action-btn.delete:hover{background:#3a1620;border-color:#7f1d1d;}
 
 /* status badges readable on dark */
-.inv-rpg .status-badge{font-family:"Press Start 2P",monospace;font-size:7px;line-height:1.7;padding:5px 7px;background:rgba(205,236,207,.12);color:#9be0a4;}
+.inv-rpg .status-badge{font-family:"Oswald",sans-serif;font-weight:700;font-size:11px;letter-spacing:.05em;line-height:1.2;padding:5px 9px;background:rgba(205,236,207,.12);color:#9be0a4;}
 .inv-rpg .status-badge.low{background:rgba(217,119,6,.20);color:#fbbf24;}
 .inv-rpg .status-badge.out_of_stock{background:rgba(220,38,38,.20);color:#fca5a5;}
 .inv-rpg .status-badge.ordered{background:rgba(59,130,246,.20);color:#93c5fd;}
