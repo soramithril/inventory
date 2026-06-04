@@ -1712,7 +1712,7 @@ input,select,textarea,.sf-select,.wh-field select,.login-input,.addinput,.tname,
 .inv-rpg .inv-card-min{color:#8fb89c;}
 .inv-rpg .inv-card-notes{color:#8fb89c;}
 .inv-rpg .inv-card-price-row,.inv-rpg .inv-card-actions{border-top-color:#1f3a28;}
-.inv-rpg .inv-card-price{color:#ffd76a;text-shadow:0 0 8px rgba(255,200,60,.4);}
+.inv-rpg .inv-card-price{color:#6ee7a8;text-shadow:0 0 10px rgba(110,231,168,.35);}
 
 /* buttons on dark loot cards */
 .inv-rpg .stock-btn{background:#15261a;color:#cdeccf;border:1px solid #2c4a36;}
